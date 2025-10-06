@@ -1,0 +1,142 @@
+---
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: dynamodb-app
+
+---
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: app-config
+  namespace: dynamodb-app
+data:
+  AWS_REGION: "us-east-1"
+  AWS_DYNAMODB_ENDPOINT: ""  # Empty for AWS DynamoDB
+
+---
+apiVersion: v1
+kind: Secret
+metadata:
+  name: aws-credentials
+  namespace: dynamodb-app
+type: Opaque
+stringData:
+  AWS_ACCESS_KEY_ID: "your-access-key"
+  AWS_SECRET_ACCESS_KEY: "your-secret-key"
+
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: dynamodb-crud-app
+  namespace: dynamodb-app
+  labels:
+    app: dynamodb-crud-app
+spec:
+  replicas: 3
+  selector:
+    matchLabels:
+      app: dynamodb-crud-app
+  template:
+    metadata:
+      labels:
+        app: dynamodb-crud-app
+    spec:
+      containers:
+        - name: app
+          image: dynamodb-crud-app:latest
+          imagePullPolicy: Always
+          ports:
+            - containerPort: 8080
+              name: http
+          env:
+            - name: AWS_REGION
+              valueFrom:
+                configMapKeyRef:
+                  name: app-config
+                  key: AWS_REGION
+            - name: AWS_DYNAMODB_ENDPOINT
+              valueFrom:
+                configMapKeyRef:
+                  name: app-config
+                  key: AWS_DYNAMODB_ENDPOINT
+            - name: AWS_ACCESS_KEY_ID
+              valueFrom:
+                secretKeyRef:
+                  name: aws-credentials
+                  key: AWS_ACCESS_KEY_ID
+            - name: AWS_SECRET_ACCESS_KEY
+              valueFrom:
+                secretKeyRef:
+                  name: aws-credentials
+                  key: AWS_SECRET_ACCESS_KEY
+          resources:
+            requests:
+              memory: "512Mi"
+              cpu: "500m"
+            limits:
+              memory: "1Gi"
+              cpu: "1000m"
+          livenessProbe:
+            httpGet:
+              path: /actuator/health/liveness
+              port: 8080
+            initialDelaySeconds: 60
+            periodSeconds: 10
+            timeoutSeconds: 5
+            failureThreshold: 3
+          readinessProbe:
+            httpGet:
+              path: /actuator/health/readiness
+              port: 8080
+            initialDelaySeconds: 30
+            periodSeconds: 10
+            timeoutSeconds: 5
+            failureThreshold: 3
+      restartPolicy: Always
+
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: dynamodb-crud-service
+  namespace: dynamodb-app
+  labels:
+    app: dynamodb-crud-app
+spec:
+  type: LoadBalancer
+  ports:
+    - port: 80
+      targetPort: 8080
+      protocol: TCP
+      name: http
+  selector:
+    app: dynamodb-crud-app
+
+---
+apiVersion: autoscaling/v2
+kind: HorizontalPodAutoscaler
+metadata:
+  name: dynamodb-crud-hpa
+  namespace: dynamodb-app
+spec:
+  scaleTargetRef:
+    apiVersion: apps/v1
+    kind: Deployment
+    name: dynamodb-crud-app
+  minReplicas: 2
+  maxReplicas: 10
+  metrics:
+    - type: Resource
+      resource:
+        name: cpu
+        target:
+          type: Utilization
+          averageUtilization: 70
+    - type: Resource
+      resource:
+        name: memory
+        target:
+          type: Utilization
+          averageUtilization: 80

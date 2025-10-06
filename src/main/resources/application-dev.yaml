@@ -1,0 +1,52 @@
+spring:
+  application:
+    name: dynamodb-crud-app
+
+  cloud:
+    aws:
+      region:
+        static: ${AWS_REGION:ap-south-1}
+      credentials:
+        access-key: ${AWS_ACCESS_KEY_ID:test}
+        secret-key: ${AWS_SECRET_ACCESS_KEY:test}
+      dynamodb:
+#        endpoint: ${AWS_DYNAMODB_ENDPOINT:http://localhost:8000}
+
+
+aws:
+  dynamodb:
+#    endpoint: ${AWS_DYNAMODB_ENDPOINT:http://localhost:8000}
+    region: ${AWS_REGION:ap-south-1}
+    access-key: ${AWS_ACCESS_KEY_ID:test}
+    secret-key: ${AWS_SECRET_ACCESS_KEY:test}
+    tables:
+      customer: customers
+      order: orders
+      product: products
+
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health,info,metrics,prometheus
+  endpoint:
+    health:
+      show-details: always
+  metrics:
+    tags:
+      application: ${spring.application.name}
+
+logging:
+  level:
+    root: INFO
+    com.example: DEBUG
+    software.amazon.awssdk: WARN
+#  pattern:
+#    console: "%d{yyyy-MM-dd HH:mm:ss} - %msg%n"
+
+springdoc:
+  api-docs:
+    path: /api-docs
+  swagger-ui:
+    path: /swagger-ui.html
+    operations-sorter: method
