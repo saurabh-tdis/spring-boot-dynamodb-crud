@@ -1,6 +1,7 @@
 package com.app.dynamodb.config;
 
 import com.app.dynamodb.shared.AwsConfigProperties;
+import io.awspring.cloud.dynamodb.DynamoDbTemplate;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.context.annotation.Bean;
@@ -42,5 +43,11 @@ public class DynamoDbConfig {
         return DynamoDbEnhancedClient.builder()
                 .dynamoDbClient(dynamoDbClient)
                 .build();
+    }
+
+    @Bean
+    public DynamoDbTemplate dynamoDbTemplate(DynamoDbEnhancedClient dynamoDbEnhancedClient) {
+        log.info("Initializing DynamoDB Template");
+        return new DynamoDbTemplate(dynamoDbEnhancedClient);
     }
 }

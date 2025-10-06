@@ -10,19 +10,19 @@ spring:
         access-key: ${AWS_ACCESS_KEY_ID:test}
         secret-key: ${AWS_SECRET_ACCESS_KEY:test}
       dynamodb:
-#        endpoint: ${AWS_DYNAMODB_ENDPOINT:http://localhost:8000}
+        endpoint: ${AWS_DYNAMODB_ENDPOINT:http://localhost:4566}
 
 
 aws:
   dynamodb:
-#    endpoint: ${AWS_DYNAMODB_ENDPOINT:http://localhost:8000}
+    endpoint: ${AWS_DYNAMODB_ENDPOINT:http://localhost:4566}
     region: ${AWS_REGION:ap-south-1}
     access-key: ${AWS_ACCESS_KEY_ID:test}
     secret-key: ${AWS_SECRET_ACCESS_KEY:test}
     tables:
       customer: customers
       order: orders
-      product: products
+      product: product
 
 management:
   endpoints:
